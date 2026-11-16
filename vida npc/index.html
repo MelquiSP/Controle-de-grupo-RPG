@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Personagens RPG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="gerenciador">
+        <h1>Gerenciador de Personagens RPG</h1>
+        <div class="turn-controls">
+            <button id="addCharacter">Adicionar Personagem</button>
+            <button id="generateEventButton" type="button">Gerar evento</button>
+            <button id="openDamageCalculatorButton" type="button">Calcular dano</button>
+            <button id="pendingEventAlert" class="pending-event-alert" type="button" aria-live="polite" hidden></button>
+            <button id="sortInitiative" type="button" aria-label="Ordenar por iniciativa, da maior para a menor" title="Organizar do maior para o menor">Ordenar ↓</button>
+            <button id="resetButton">Reiniciar</button>
+        </div>
+        <div class="initiative-toolbar">
+            <div class="turn-navigation" role="group" aria-label="Navegação de turnos">
+                <span class="turns-label">Turnos</span>
+                <button id="previousTurn" type="button" aria-label="Voltar um turno" title="Voltar um turno">←</button>
+                <button id="advanceTurn" type="button" aria-label="Avançar um turno" title="Avançar um turno">→</button>
+            </div>
+            <span id="turnStatus" aria-live="polite">Preencha as iniciativas para começar.</span>
+        </div>
+        <div id="charactersContainer">
+            <div class="header">
+                <div>Iniciativa</div>
+                <div>Nome</div>
+                <div>CA</div>
+                <div>HP</div>
+                <div>Dano Sofrido</div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+        <dialog id="eventDialog" class="rpg-dialog" aria-labelledby="eventDialogTitle">
+            <div class="dialog-header">
+                <h2 id="eventDialogTitle">Gerar evento</h2>
+                <button id="closeEventDialog" class="dialog-close-button" type="button" aria-label="Fechar janela" title="Fechar">×</button>
+            </div>
+            <p>A contagem começa na iniciativa atual e dispara quando a vez voltar para ela.</p>
+            <form id="eventForm">
+                <div>
+                    <label for="eventName">O que vai acontecer?</label>
+                    <input id="eventName" type="text" maxlength="120" placeholder="Ex.: O vilão chega" required>
+                </div>
+                <div>
+                    <label for="eventDelay">Depois de quantas rodadas?</label>
+                    <input id="eventDelay" type="number" min="1" step="1" placeholder="Ex.: 2" required>
+                </div>
+                <div class="dialog-actions">
+                    <button id="confirmEvent" type="submit">Confirmar</button>
+                    <button id="cancelEvent" type="button">Negar</button>
+                </div>
+            </form>
+            <section class="pending-events" aria-labelledby="pendingEventsTitle">
+                <h3 id="pendingEventsTitle">Eventos pendentes</h3>
+                <ul id="eventList" aria-live="polite"></ul>
+            </section>
+        </dialog>
+        <dialog id="damageCalculatorDialog" class="rpg-dialog" aria-labelledby="damageCalculatorTitle">
+            <div class="dialog-header">
+                <h2 id="damageCalculatorTitle">Calculadora de dano</h2>
+                <button id="closeDamageCalculatorTop" class="dialog-close-button" type="button" aria-label="Fechar janela" title="Fechar">×</button>
+            </div>
+            <p>Escolha a gravidade e o nível para consultar a CD e rolar o dano. O HP não será alterado.</p>
+            <form id="damageCalculatorForm">
+                <div>
+                    <label for="damageCalculatorSeverity">Gravidade</label>
+                    <select id="damageCalculatorSeverity">
+                        <option value="inconveniente">Inconveniente</option>
+                        <option value="perigosa">Perigosa</option>
+                        <option value="mortal">Mortal</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="damageCalculatorLevel">Nível do personagem</label>
+                    <input id="damageCalculatorLevel" type="number" min="1" max="20" step="1" value="1" required>
+                </div>
+                <section id="damageRulePreview" class="damage-rule-preview" aria-live="polite">
+                    <p><strong>Teste de resistência:</strong> CD <span id="damageResistanceDc">10–11</span> <span class="rule-hint">(escolha o valor da faixa para o teste)</span></p>
+                    <p><strong>Jogada de ataque da armadilha:</strong> <span id="damageAttackBonus">+3 até +5</span></p>
+                    <p><strong>Dano pela tabela:</strong> <span id="damageDiceFormula">1d10</span></p>
+                </section>
+                <div class="damage-attack-controls">
+                    <div>
+                        <label for="damageAttackBonusSelect">Bônus para a jogada de ataque</label>
+                        <select id="damageAttackBonusSelect" disabled></select>
+                    </div>
+                    <button id="rollAttackButton" type="button" disabled>Rolar ataque (D20)</button>
+                </div>
+                <div class="dialog-actions">
+                    <button id="rollDamageButton" type="submit">Rolar dano</button>
+                    <button id="closeDamageCalculator" type="button">Fechar</button>
+                </div>
+            </form>
+            <section id="damageCalculatorResult" class="damage-calculator-result" aria-live="polite" hidden>
+                <h3>Dano causado</h3>
+                <p id="damageRollResult"></p>
+            </section>
+            <section id="damageAttackResult" class="damage-calculator-result" aria-live="polite" hidden>
+                <h3>Resultado do ataque</h3>
+                <p id="damageAttackRollResult">
+                    <span class="attack-roll-calculation"></span>
+                    <strong class="attack-roll-total"></strong>
+                </p>
+            </section>
+        </dialog>
+        <dialog id="eventNoticeDialog" class="rpg-dialog event-notice-dialog" aria-labelledby="eventNoticeTitle">
+            <h2 id="eventNoticeTitle">É hora do evento!</h2>
+            <ul id="eventMessages"></ul>
+            <button id="closeEventNotice" type="button">Fechar</button>
+        </dialog>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
